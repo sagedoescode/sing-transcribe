@@ -170,7 +170,7 @@
       </div>
       <div class="brand-text">
         <div class="brand-name">Lyrica</div>
-        <div class="brand-tag">Sing or upload audio, see your lyrics. Max 5 min.</div>
+        <div class="brand-tag">Sing or upload audio. Pick accuracy. Max 5 min.</div>
       </div>
     </header>
 
@@ -181,6 +181,12 @@
         <button id="uploadBtn">Upload</button>
         <input id="fileInput" type="file" accept="audio/*,.wav,.mp3,.flac,.m4a,.ogg,.webm,.aac" hidden />
         <button id="clearBtn">Clear</button>
+        <select id="modelSel" title="Accuracy / model size">
+          <option value="Xenova/whisper-tiny">Tiny (fastest, ~75MB)</option>
+          <option value="Xenova/whisper-base">Base (~145MB)</option>
+          <option value="Xenova/whisper-small" selected>Small (accurate, ~480MB)</option>
+          <option value="Xenova/whisper-medium">Medium (best, ~1.5GB)</option>
+        </select>
         <select id="langSel" title="Language">
           <option value="en" selected>English</option>
           <option value="ko">Korean</option>
@@ -210,13 +216,14 @@
     import { pipeline, env } from "https://cdn.jsdelivr.net/npm/@xenova/transformers@2.17.2";
     env.allowLocalModels = false;
 
-    const MODEL_ID = "Xenova/whisper-base";
+    const DEFAULT_MODEL = "Xenova/whisper-small";
 
     const mainBtn = document.getElementById("mainBtn");
     const stopBtn = document.getElementById("stopBtn");
     const uploadBtn = document.getElementById("uploadBtn");
     const fileInput = document.getElementById("fileInput");
     const clearBtn = document.getElementById("clearBtn");
+    const modelSel = document.getElementById("modelSel");
     const player = document.getElementById("player");
     const lyricsEl = document.getElementById("lyrics");
     const statusEl = document.getElementById("status");
@@ -232,6 +239,7 @@
     let transcriber = null;
     let recordingStream = null;
     let lyricLines = [];
+    let loadedModel = null;
     let recordTimer = null;
     let recordCountdown = null;
     let recordStartedAt = 0;
@@ -241,10 +249,11 @@
     }
 
     async function ensureModel() {
-      if (transcriber) return transcriber;
+      const id = modelSel.value || DEFAULT_MODEL;
+      if (transcriber && loadedModel === id) return transcriber;
       progress.classList.add("on");
-      setStatus("Loading Whisper model...");
-      transcriber = await pipeline("automatic-speech-recognition", MODEL_ID, {
+      setStatus("Loading " + id.split("/")[1] + "...");
+      transcriber = await pipeline("automatic-speech-recognition", id, {
         progress_callback: (p) => {
           if (p.status === "progress" && p.progress != null) {
             bar.style.width = Math.round(p.progress) + "%";
@@ -252,6 +261,7 @@
           }
         },
       });
+      loadedModel = id;
       progress.classList.remove("on");
       bar.style.width = "0%";
       return transcriber;
@@ -356,14 +366,22 @@
     async function startRecording() {
       try {
         recordingStream = await navigator.mediaDevices.getUserMedia({
-          audio: { echoCancellation: true, noiseSuppression: true, channelCount: 1 }
+          audio: {
+            echoCancellation: false,
+            noiseSuppression: false,
+            autoGainControl: false,
+            channelCount: 1,
+            sampleRate: 48000,
+          }
         });
       } catch (err) {
         setStatus("Mic error: " + err.message);
         return;
       }
       chunks = [];
-      mediaRecorder = new MediaRecorder(recordingStream);
+      const mimeCandidates = ["audio/webm;codecs=opus", "audio/webm", "audio/ogg;codecs=opus"];
+      const mime = mimeCandidates.find(m => MediaRecorder.isTypeSupported?.(m)) || "";
+      mediaRecorder = new MediaRecorder(recordingStream, mime ? { mimeType: mime, audioBitsPerSecond: 128000 } : {});
       mediaRecorder.ondataavailable = (e) => e.data.size && chunks.push(e.data);
       mediaRecorder.onstop = async () => {
         clearRecordTimers();
@@ -412,7 +430,14 @@
         const audio = await blobToMono16k(audioBlob);
         setStatus("Transcribing...");
         const lang = langSel.value;
-        const opts = { chunk_length_s: 30, stride_length_s: 5, return_timestamps: true };
+        const opts = {
+          chunk_length_s: 30,
+          stride_length_s: 5,
+          return_timestamps: true,
+          no_speech_threshold: 0.2,
+          condition_on_previous_text: false,
+          temperature: 0,
+        };
         if (lang !== "auto") { opts.language = lang; opts.task = "transcribe"; }
         const result = await t(audio, opts);
         renderLyrics(result.chunks, result.text);
