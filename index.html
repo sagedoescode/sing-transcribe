@@ -3,131 +3,207 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Sing Transcribe</title>
+  <title>Lyrica · Sing to Lyrics</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%239b6bff'/%3E%3Cstop offset='1' stop-color='%2300d4ff'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='64' height='64' rx='14' fill='url(%23g)'/%3E%3Cpath fill='white' d='M40 14v24.2a8 8 0 1 1-4-6.93V22l-14 3v17.2a8 8 0 1 1-4-6.93V20l22-6z'/%3E%3C/svg%3E" />
   <style>
     :root { color-scheme: dark; }
     * { box-sizing: border-box; }
+    html, body { height: 100%; }
     body {
       margin: 0;
       min-height: 100vh;
       display: flex;
+      flex-direction: column;
       align-items: center;
-      justify-content: center;
-      background: radial-gradient(1200px 800px at 20% 10%, #1b2440 0%, #0a0d18 60%, #05070d 100%);
+      background:
+        radial-gradient(1100px 700px at 85% 15%, rgba(155, 107, 255, 0.22) 0%, transparent 60%),
+        radial-gradient(900px 600px at 10% 90%, rgba(0, 212, 255, 0.18) 0%, transparent 55%),
+        #07080f;
       color: #e9ecf5;
-      font: 15px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-      padding: 24px;
+      font: 15px/1.5 "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+      padding: 28px 20px 60px;
     }
-    .card {
-      width: 100%;
-      max-width: 720px;
-      background: rgba(22, 26, 40, 0.72);
+    .shell { width: 100%; max-width: 820px; }
+
+    header.brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 22px;
+    }
+    .logo {
+      width: 36px; height: 36px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, #9b6bff 0%, #00d4ff 100%);
+      display: grid; place-items: center;
+      box-shadow: 0 8px 22px rgba(155, 107, 255, 0.35);
+    }
+    .logo svg { width: 20px; height: 20px; color: #fff; }
+    .brand-text { line-height: 1.1; }
+    .brand-name {
+      font-size: 20px; font-weight: 700; letter-spacing: 0.2px;
+      background: linear-gradient(90deg, #ffffff 0%, #c6b8ff 60%, #8ee6ff 100%);
+      -webkit-background-clip: text; background-clip: text; color: transparent;
+    }
+    .brand-tag { font-size: 12px; color: #8a93ab; margin-top: 2px; }
+
+    .panel {
+      background: rgba(17, 20, 33, 0.68);
       border: 1px solid rgba(255,255,255,0.08);
-      border-radius: 16px;
-      padding: 24px 24px 20px;
+      border-radius: 18px;
+      padding: 18px;
       backdrop-filter: blur(14px);
       box-shadow: 0 24px 60px rgba(0,0,0,0.45);
     }
-    h1 {
-      margin: 0 0 4px;
-      font-size: 20px;
-      font-weight: 600;
-      letter-spacing: 0.2px;
-    }
-    .sub { color: #8a93ab; font-size: 13px; margin-bottom: 18px; }
-    .row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+
+    .controls { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
     button {
       appearance: none;
       border: 1px solid rgba(255,255,255,0.10);
-      background: #2b3350;
+      background: #232841;
       color: #e9ecf5;
       padding: 12px 20px;
-      border-radius: 10px;
+      border-radius: 12px;
       font-size: 14px;
-      font-weight: 500;
+      font-weight: 600;
       cursor: pointer;
-      transition: transform .05s ease, background .2s ease, opacity .2s;
+      transition: transform .05s ease, background .2s ease, opacity .2s, box-shadow .2s;
     }
-    button:hover:not(:disabled) { background: #36406a; }
+    button:hover:not(:disabled) { background: #2c3352; }
     button:active:not(:disabled) { transform: translateY(1px); }
-    button:disabled { opacity: 0.45; cursor: not-allowed; }
-    .go { background: #2f7d49; border-color: #2f7d49; }
-    .go:hover:not(:disabled) { background: #369155; }
+    button:disabled { opacity: 0.4; cursor: not-allowed; }
+    .go {
+      background: linear-gradient(135deg, #9b6bff 0%, #6a7bff 100%);
+      border-color: transparent;
+      box-shadow: 0 8px 22px rgba(155, 107, 255, 0.35);
+    }
+    .go:hover:not(:disabled) { filter: brightness(1.08); }
     .stop { background: #c2344a; border-color: #c2344a; }
     .stop:hover:not(:disabled) { background: #d63e56; }
     select {
-      background: #1c2238;
+      background: #1a1f33;
       color: #e9ecf5;
       border: 1px solid rgba(255,255,255,0.10);
-      border-radius: 10px;
-      padding: 9px 12px;
+      border-radius: 12px;
+      padding: 11px 12px;
       font-size: 14px;
+      font-weight: 500;
     }
+
     .status {
-      margin: 14px 0;
+      margin-top: 14px;
       font-size: 13px;
       color: #a9b3cc;
       min-height: 18px;
+      display: flex; align-items: center; gap: 8px;
     }
     .dot {
-      display: inline-block;
-      width: 8px; height: 8px; border-radius: 50%;
-      background: #c2344a; margin-right: 8px;
+      width: 9px; height: 9px; border-radius: 50%;
+      background: #ff4d6d;
+      box-shadow: 0 0 12px rgba(255, 77, 109, 0.8);
       animation: pulse 1s infinite;
-      vertical-align: middle;
     }
     @keyframes pulse { 0%,100% { opacity: 1 } 50% { opacity: 0.3 } }
-    audio { width: 100%; margin-top: 10px; }
-    .out {
-      margin-top: 14px;
-      white-space: pre-wrap;
-      background: #0e1222;
-      border: 1px solid rgba(255,255,255,0.08);
-      border-radius: 10px;
-      padding: 14px;
-      min-height: 120px;
-      font-size: 14px;
-      color: #e9ecf5;
-    }
+
+    audio { width: 100%; margin-top: 12px; border-radius: 10px; }
+
     .progress {
       height: 6px;
       background: rgba(255,255,255,0.08);
       border-radius: 4px;
       overflow: hidden;
-      margin-top: 8px;
+      margin-top: 10px;
       display: none;
     }
     .progress.on { display: block; }
-    .bar { height: 100%; width: 0%; background: #4f7dff; transition: width .2s; }
-    .tiny { font-size: 12px; color: #6e7794; margin-top: 14px; }
+    .bar { height: 100%; width: 0%; background: linear-gradient(90deg, #9b6bff, #00d4ff); transition: width .2s; }
+
+    .lyrics-wrap {
+      margin-top: 20px;
+      padding: 28px 18px;
+      min-height: 260px;
+      border-radius: 18px;
+      background:
+        radial-gradient(600px 300px at 50% 0%, rgba(155, 107, 255, 0.10) 0%, transparent 70%),
+        rgba(10, 12, 22, 0.8);
+      border: 1px solid rgba(255,255,255,0.06);
+    }
+    .lyrics {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      text-align: center;
+    }
+    .lyric-line {
+      font-family: "Inter", system-ui, sans-serif;
+      font-weight: 700;
+      font-size: 22px;
+      line-height: 1.35;
+      color: rgba(233, 236, 245, 0.32);
+      transition: color .35s ease, transform .35s ease, text-shadow .35s ease, filter .35s ease;
+      cursor: pointer;
+      letter-spacing: 0.1px;
+    }
+    .lyric-line:hover { color: rgba(233, 236, 245, 0.65); }
+    .lyric-line.active {
+      color: #ffffff;
+      transform: scale(1.04);
+      text-shadow: 0 0 24px rgba(155, 107, 255, 0.35);
+    }
+    .lyric-line.past { color: rgba(233, 236, 245, 0.22); filter: blur(0.2px); }
+    .placeholder {
+      text-align: center;
+      color: #6e7794;
+      font-size: 14px;
+      padding: 40px 0;
+    }
+
+    footer { margin-top: 18px; font-size: 12px; color: #6e7794; text-align: center; }
+    footer a { color: #9b6bff; text-decoration: none; }
   </style>
 </head>
 <body>
-  <div class="card">
-    <h1>Sing Transcribe</h1>
-    <div class="sub">Hit Transcribe, sing, hit Stop. Local Whisper, no uploads.</div>
+  <div class="shell">
+    <header class="brand">
+      <div class="logo" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M14 4v10.1a4 4 0 1 1-2-3.46V7L8 8v8.1a4 4 0 1 1-2-3.46V6l8-2z"/></svg>
+      </div>
+      <div class="brand-text">
+        <div class="brand-name">Lyrica</div>
+        <div class="brand-tag">Sing or upload audio, see your lyrics. Max 5 min.</div>
+      </div>
+    </header>
 
-    <div class="row">
-      <button id="mainBtn" class="go">Transcribe</button>
-      <button id="stopBtn" class="stop" disabled>Stop</button>
-      <button id="clearBtn">Clear</button>
-      <select id="langSel" title="Language">
-        <option value="en" selected>English</option>
-        <option value="ko">Korean</option>
-        <option value="ja">Japanese</option>
-        <option value="es">Spanish</option>
-        <option value="fr">French</option>
-        <option value="de">German</option>
-        <option value="auto">Auto detect</option>
-      </select>
+    <div class="panel">
+      <div class="controls">
+        <button id="mainBtn" class="go">Transcribe</button>
+        <button id="stopBtn" class="stop" disabled>Stop</button>
+        <button id="uploadBtn">Upload</button>
+        <input id="fileInput" type="file" accept="audio/*,.wav,.mp3,.flac,.m4a,.ogg,.webm,.aac" hidden />
+        <button id="clearBtn">Clear</button>
+        <select id="langSel" title="Language">
+          <option value="en" selected>English</option>
+          <option value="ko">Korean</option>
+          <option value="ja">Japanese</option>
+          <option value="es">Spanish</option>
+          <option value="fr">French</option>
+          <option value="de">German</option>
+          <option value="auto">Auto detect</option>
+        </select>
+      </div>
+
+      <div class="progress" id="progress"><div class="bar" id="bar"></div></div>
+      <div class="status" id="status">Ready.</div>
+      <audio id="player" controls></audio>
     </div>
 
-    <div class="progress" id="progress"><div class="bar" id="bar"></div></div>
-    <div class="status" id="status">Idle.</div>
+    <div class="lyrics-wrap">
+      <div id="lyrics" class="lyrics">
+        <div class="placeholder">Your lyrics will appear here, line by line.</div>
+      </div>
+    </div>
 
-    <audio id="player" controls></audio>
-    <div class="out" id="out">Transcript will appear here.</div>
-    <div class="tiny">Runs fully in your browser. No uploads. Model cached after first download.</div>
+    <footer>Runs locally in your browser. Powered by Whisper via transformers.js.</footer>
   </div>
 
   <script type="module">
@@ -138,22 +214,30 @@
 
     const mainBtn = document.getElementById("mainBtn");
     const stopBtn = document.getElementById("stopBtn");
+    const uploadBtn = document.getElementById("uploadBtn");
+    const fileInput = document.getElementById("fileInput");
     const clearBtn = document.getElementById("clearBtn");
     const player = document.getElementById("player");
-    const out = document.getElementById("out");
+    const lyricsEl = document.getElementById("lyrics");
     const statusEl = document.getElementById("status");
     const langSel = document.getElementById("langSel");
     const progress = document.getElementById("progress");
     const bar = document.getElementById("bar");
+
+    const MAX_RECORD_SECONDS = 300;
 
     let mediaRecorder = null;
     let chunks = [];
     let audioBlob = null;
     let transcriber = null;
     let recordingStream = null;
+    let lyricLines = [];
+    let recordTimer = null;
+    let recordCountdown = null;
+    let recordStartedAt = 0;
 
     function setStatus(msg, recording = false) {
-      statusEl.innerHTML = (recording ? '<span class="dot"></span>' : "") + msg;
+      statusEl.innerHTML = (recording ? '<span class="dot"></span>' : "") + "<span>" + msg + "</span>";
     }
 
     async function ensureModel() {
@@ -187,6 +271,88 @@
       return merged;
     }
 
+    function renderPlaceholder(msg) {
+      lyricsEl.innerHTML = '<div class="placeholder">' + msg + '</div>';
+      lyricLines = [];
+    }
+
+    function splitIntoLines(text) {
+      const clean = text.replace(/\s+/g, " ").trim();
+      if (!clean) return [];
+      const parts = clean
+        .split(/(?<=[.?!])\s+|\s*[,;:]\s+|\s+(?=and\s|but\s|so\s|or\s|yet\s|while\s)/i)
+        .map(s => s.trim())
+        .filter(Boolean);
+      if (parts.length <= 1) {
+        const words = clean.split(" ");
+        const chunks = [];
+        for (let i = 0; i < words.length; i += 6) chunks.push(words.slice(i, i + 6).join(" "));
+        return chunks;
+      }
+      return parts;
+    }
+
+    function renderLyrics(chunksWithTs, fallbackText) {
+      lyricsEl.innerHTML = "";
+      lyricLines = [];
+      let lines = [];
+      if (Array.isArray(chunksWithTs) && chunksWithTs.length) {
+        lines = chunksWithTs
+          .map(c => ({
+            text: (c.text || "").trim(),
+            start: Array.isArray(c.timestamp) ? c.timestamp[0] : null,
+            end: Array.isArray(c.timestamp) ? c.timestamp[1] : null,
+          }))
+          .filter(l => l.text);
+      }
+      if (!lines.length) {
+        lines = splitIntoLines(fallbackText || "").map(t => ({ text: t, start: null, end: null }));
+      }
+      if (!lines.length) {
+        renderPlaceholder("(no speech detected)");
+        return;
+      }
+      for (const line of lines) {
+        const el = document.createElement("div");
+        el.className = "lyric-line";
+        el.textContent = line.text;
+        if (line.start != null) {
+          el.addEventListener("click", () => {
+            try { player.currentTime = line.start; player.play(); } catch {}
+          });
+        }
+        lyricsEl.appendChild(el);
+        lyricLines.push({ ...line, el });
+      }
+    }
+
+    function updateActiveLyric() {
+      if (!lyricLines.length) return;
+      const t = player.currentTime || 0;
+      let activeIdx = -1;
+      for (let i = 0; i < lyricLines.length; i++) {
+        const line = lyricLines[i];
+        if (line.start == null) continue;
+        const end = line.end != null ? line.end : (lyricLines[i + 1]?.start ?? Infinity);
+        if (t >= line.start && t < end) { activeIdx = i; break; }
+        if (t >= line.start) activeIdx = i;
+      }
+      lyricLines.forEach((line, i) => {
+        line.el.classList.toggle("active", i === activeIdx);
+        line.el.classList.toggle("past", activeIdx >= 0 && i < activeIdx);
+      });
+      if (activeIdx >= 0) {
+        const el = lyricLines[activeIdx].el;
+        const rect = el.getBoundingClientRect();
+        if (rect.top < 80 || rect.bottom > window.innerHeight - 80) {
+          el.scrollIntoView({ behavior: "smooth", block: "center" });
+        }
+      }
+    }
+
+    player.addEventListener("timeupdate", updateActiveLyric);
+    player.addEventListener("seeked", updateActiveLyric);
+
     async function startRecording() {
       try {
         recordingStream = await navigator.mediaDevices.getUserMedia({
@@ -200,6 +366,7 @@
       mediaRecorder = new MediaRecorder(recordingStream);
       mediaRecorder.ondataavailable = (e) => e.data.size && chunks.push(e.data);
       mediaRecorder.onstop = async () => {
+        clearRecordTimers();
         audioBlob = new Blob(chunks, { type: chunks[0]?.type || "audio/webm" });
         player.src = URL.createObjectURL(audioBlob);
         recordingStream?.getTracks().forEach(t => t.stop());
@@ -207,10 +374,31 @@
         await transcribeNow();
       };
       mediaRecorder.start();
+      recordStartedAt = Date.now();
       mainBtn.disabled = true;
       stopBtn.disabled = false;
       clearBtn.disabled = true;
-      setStatus("Recording... sing now, then Stop.", true);
+      renderPlaceholder("Listening...");
+      const tick = () => {
+        const elapsed = Math.floor((Date.now() - recordStartedAt) / 1000);
+        const remaining = Math.max(0, MAX_RECORD_SECONDS - elapsed);
+        const mm = String(Math.floor(remaining / 60)).padStart(2, "0");
+        const ss = String(remaining % 60).padStart(2, "0");
+        setStatus("Recording " + mm + ":" + ss + " left. Max 5 min.", true);
+      };
+      tick();
+      recordCountdown = setInterval(tick, 500);
+      recordTimer = setTimeout(() => {
+        if (mediaRecorder && mediaRecorder.state !== "inactive") {
+          setStatus("Reached 5-minute limit. Stopping...");
+          mediaRecorder.stop();
+        }
+      }, MAX_RECORD_SECONDS * 1000);
+    }
+
+    function clearRecordTimers() {
+      if (recordTimer) { clearTimeout(recordTimer); recordTimer = null; }
+      if (recordCountdown) { clearInterval(recordCountdown); recordCountdown = null; }
     }
 
     async function transcribeNow() {
@@ -224,11 +412,11 @@
         const audio = await blobToMono16k(audioBlob);
         setStatus("Transcribing...");
         const lang = langSel.value;
-        const opts = { chunk_length_s: 30, stride_length_s: 5, return_timestamps: false };
+        const opts = { chunk_length_s: 30, stride_length_s: 5, return_timestamps: true };
         if (lang !== "auto") { opts.language = lang; opts.task = "transcribe"; }
         const result = await t(audio, opts);
-        out.textContent = (result.text || "").trim() || "(no speech detected)";
-        setStatus("Done. Hit Clear to try again.");
+        renderLyrics(result.chunks, result.text);
+        setStatus("Done. Tap a line to replay.");
       } catch (err) {
         setStatus("Error: " + err.message);
         console.error(err);
@@ -241,6 +429,18 @@
 
     mainBtn.addEventListener("click", startRecording);
 
+    uploadBtn.addEventListener("click", () => fileInput.click());
+    fileInput.addEventListener("change", async () => {
+      const file = fileInput.files?.[0];
+      if (!file) return;
+      audioBlob = file;
+      player.src = URL.createObjectURL(file);
+      renderPlaceholder("Preparing " + file.name + "...");
+      setStatus("Loaded " + file.name + " (" + (file.size / 1024 / 1024).toFixed(2) + " MB)");
+      fileInput.value = "";
+      await transcribeNow();
+    });
+
     stopBtn.addEventListener("click", () => {
       if (mediaRecorder && mediaRecorder.state !== "inactive") {
         setStatus("Stopping...");
@@ -249,6 +449,7 @@
     });
 
     clearBtn.addEventListener("click", () => {
+      clearRecordTimers();
       if (mediaRecorder && mediaRecorder.state !== "inactive") {
         mediaRecorder.onstop = null;
         mediaRecorder.stop();
@@ -260,7 +461,7 @@
       audioBlob = null;
       player.removeAttribute("src");
       player.load();
-      out.textContent = "Transcript will appear here.";
+      renderPlaceholder("Your lyrics will appear here, line by line.");
       mainBtn.disabled = false;
       stopBtn.disabled = true;
       clearBtn.disabled = false;
