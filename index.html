@@ -41,19 +41,20 @@
       border: 1px solid rgba(255,255,255,0.10);
       background: #2b3350;
       color: #e9ecf5;
-      padding: 10px 16px;
+      padding: 12px 20px;
       border-radius: 10px;
       font-size: 14px;
+      font-weight: 500;
       cursor: pointer;
       transition: transform .05s ease, background .2s ease, opacity .2s;
     }
     button:hover:not(:disabled) { background: #36406a; }
     button:active:not(:disabled) { transform: translateY(1px); }
     button:disabled { opacity: 0.45; cursor: not-allowed; }
-    .rec { background: #c2344a; border-color: #c2344a; }
-    .rec:hover:not(:disabled) { background: #d63e56; }
     .go { background: #2f7d49; border-color: #2f7d49; }
     .go:hover:not(:disabled) { background: #369155; }
+    .stop { background: #c2344a; border-color: #c2344a; }
+    .stop:hover:not(:disabled) { background: #d63e56; }
     select {
       background: #1c2238;
       color: #e9ecf5;
@@ -104,17 +105,12 @@
 <body>
   <div class="card">
     <h1>Sing Transcribe</h1>
-    <div class="sub">Record isolated vocals, then transcribe locally with Whisper. First run downloads the model (cached after).</div>
+    <div class="sub">Hit Transcribe, sing, hit Stop. Local Whisper, no uploads.</div>
 
     <div class="row">
-      <button id="recBtn" class="rec">Record</button>
-      <button id="stopBtn" disabled>Stop</button>
-      <button id="transcribeBtn" class="go" disabled>Transcribe</button>
-      <select id="modelSel" title="Model size">
-        <option value="Xenova/whisper-tiny">tiny (fast, ~75MB)</option>
-        <option value="Xenova/whisper-base" selected>base (balanced, ~145MB)</option>
-        <option value="Xenova/whisper-small">small (accurate, ~480MB)</option>
-      </select>
+      <button id="mainBtn" class="go">Transcribe</button>
+      <button id="stopBtn" class="stop" disabled>Stop</button>
+      <button id="clearBtn">Clear</button>
       <select id="langSel" title="Language">
         <option value="en" selected>English</option>
         <option value="ko">Korean</option>
@@ -131,20 +127,21 @@
 
     <audio id="player" controls></audio>
     <div class="out" id="out">Transcript will appear here.</div>
-    <div class="tiny">Runs fully in your browser. No uploads. Model is cached by the browser after first download.</div>
+    <div class="tiny">Runs fully in your browser. No uploads. Model cached after first download.</div>
   </div>
 
   <script type="module">
     import { pipeline, env } from "https://cdn.jsdelivr.net/npm/@xenova/transformers@2.17.2";
     env.allowLocalModels = false;
 
-    const recBtn = document.getElementById("recBtn");
+    const MODEL_ID = "Xenova/whisper-base";
+
+    const mainBtn = document.getElementById("mainBtn");
     const stopBtn = document.getElementById("stopBtn");
-    const transcribeBtn = document.getElementById("transcribeBtn");
+    const clearBtn = document.getElementById("clearBtn");
     const player = document.getElementById("player");
     const out = document.getElementById("out");
     const statusEl = document.getElementById("status");
-    const modelSel = document.getElementById("modelSel");
     const langSel = document.getElementById("langSel");
     const progress = document.getElementById("progress");
     const bar = document.getElementById("bar");
@@ -153,18 +150,17 @@
     let chunks = [];
     let audioBlob = null;
     let transcriber = null;
-    let loadedModel = null;
+    let recordingStream = null;
 
     function setStatus(msg, recording = false) {
       statusEl.innerHTML = (recording ? '<span class="dot"></span>' : "") + msg;
     }
 
     async function ensureModel() {
-      const id = modelSel.value;
-      if (transcriber && loadedModel === id) return transcriber;
+      if (transcriber) return transcriber;
       progress.classList.add("on");
-      setStatus("Loading model " + id + "...");
-      transcriber = await pipeline("automatic-speech-recognition", id, {
+      setStatus("Loading Whisper model...");
+      transcriber = await pipeline("automatic-speech-recognition", MODEL_ID, {
         progress_callback: (p) => {
           if (p.status === "progress" && p.progress != null) {
             bar.style.width = Math.round(p.progress) + "%";
@@ -172,43 +168,10 @@
           }
         },
       });
-      loadedModel = id;
       progress.classList.remove("on");
       bar.style.width = "0%";
-      setStatus("Model ready.");
       return transcriber;
     }
-
-    recBtn.addEventListener("click", async () => {
-      try {
-        const stream = await navigator.mediaDevices.getUserMedia({
-          audio: { echoCancellation: true, noiseSuppression: true, channelCount: 1 }
-        });
-        chunks = [];
-        mediaRecorder = new MediaRecorder(stream);
-        mediaRecorder.ondataavailable = (e) => e.data.size && chunks.push(e.data);
-        mediaRecorder.onstop = () => {
-          audioBlob = new Blob(chunks, { type: chunks[0]?.type || "audio/webm" });
-          player.src = URL.createObjectURL(audioBlob);
-          transcribeBtn.disabled = false;
-          setStatus("Recorded " + (audioBlob.size / 1024).toFixed(0) + " KB. Ready to transcribe.");
-          stream.getTracks().forEach(t => t.stop());
-        };
-        mediaRecorder.start();
-        recBtn.disabled = true;
-        stopBtn.disabled = false;
-        transcribeBtn.disabled = true;
-        setStatus("Recording...", true);
-      } catch (err) {
-        setStatus("Mic error: " + err.message);
-      }
-    });
-
-    stopBtn.addEventListener("click", () => {
-      if (mediaRecorder && mediaRecorder.state !== "inactive") mediaRecorder.stop();
-      recBtn.disabled = false;
-      stopBtn.disabled = true;
-    });
 
     async function blobToMono16k(blob) {
       const arr = await blob.arrayBuffer();
@@ -216,19 +179,46 @@
       const ctx = new AC({ sampleRate: 16000 });
       const decoded = await ctx.decodeAudioData(arr);
       if (decoded.numberOfChannels === 1) return decoded.getChannelData(0);
-      const out = new Float32Array(decoded.length);
+      const merged = new Float32Array(decoded.length);
       for (let ch = 0; ch < decoded.numberOfChannels; ch++) {
         const data = decoded.getChannelData(ch);
-        for (let i = 0; i < data.length; i++) out[i] += data[i] / decoded.numberOfChannels;
+        for (let i = 0; i < data.length; i++) merged[i] += data[i] / decoded.numberOfChannels;
       }
-      return out;
+      return merged;
     }
 
-    transcribeBtn.addEventListener("click", async () => {
+    async function startRecording() {
+      try {
+        recordingStream = await navigator.mediaDevices.getUserMedia({
+          audio: { echoCancellation: true, noiseSuppression: true, channelCount: 1 }
+        });
+      } catch (err) {
+        setStatus("Mic error: " + err.message);
+        return;
+      }
+      chunks = [];
+      mediaRecorder = new MediaRecorder(recordingStream);
+      mediaRecorder.ondataavailable = (e) => e.data.size && chunks.push(e.data);
+      mediaRecorder.onstop = async () => {
+        audioBlob = new Blob(chunks, { type: chunks[0]?.type || "audio/webm" });
+        player.src = URL.createObjectURL(audioBlob);
+        recordingStream?.getTracks().forEach(t => t.stop());
+        recordingStream = null;
+        await transcribeNow();
+      };
+      mediaRecorder.start();
+      mainBtn.disabled = true;
+      stopBtn.disabled = false;
+      clearBtn.disabled = true;
+      setStatus("Recording... sing now, then Stop.", true);
+    }
+
+    async function transcribeNow() {
       if (!audioBlob) return;
       try {
-        transcribeBtn.disabled = true;
-        recBtn.disabled = true;
+        mainBtn.disabled = true;
+        stopBtn.disabled = true;
+        clearBtn.disabled = true;
         const t = await ensureModel();
         setStatus("Decoding audio...");
         const audio = await blobToMono16k(audioBlob);
@@ -238,14 +228,43 @@
         if (lang !== "auto") { opts.language = lang; opts.task = "transcribe"; }
         const result = await t(audio, opts);
         out.textContent = (result.text || "").trim() || "(no speech detected)";
-        setStatus("Done.");
+        setStatus("Done. Hit Clear to try again.");
       } catch (err) {
         setStatus("Error: " + err.message);
         console.error(err);
       } finally {
-        transcribeBtn.disabled = false;
-        recBtn.disabled = false;
+        mainBtn.disabled = false;
+        stopBtn.disabled = true;
+        clearBtn.disabled = false;
       }
+    }
+
+    mainBtn.addEventListener("click", startRecording);
+
+    stopBtn.addEventListener("click", () => {
+      if (mediaRecorder && mediaRecorder.state !== "inactive") {
+        setStatus("Stopping...");
+        mediaRecorder.stop();
+      }
+    });
+
+    clearBtn.addEventListener("click", () => {
+      if (mediaRecorder && mediaRecorder.state !== "inactive") {
+        mediaRecorder.onstop = null;
+        mediaRecorder.stop();
+      }
+      recordingStream?.getTracks().forEach(t => t.stop());
+      recordingStream = null;
+      mediaRecorder = null;
+      chunks = [];
+      audioBlob = null;
+      player.removeAttribute("src");
+      player.load();
+      out.textContent = "Transcript will appear here.";
+      mainBtn.disabled = false;
+      stopBtn.disabled = true;
+      clearBtn.disabled = false;
+      setStatus("Cleared.");
     });
   </script>
 </body>
