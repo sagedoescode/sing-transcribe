@@ -170,7 +170,7 @@
       </div>
       <div class="brand-text">
         <div class="brand-name">Lyrica</div>
-        <div class="brand-tag">Sing or upload audio. Pick accuracy. Max 5 min.</div>
+        <div class="brand-tag">Sing or upload MP3. Pick accuracy. Max 5 min.</div>
       </div>
     </header>
 
@@ -179,7 +179,7 @@
         <button id="mainBtn" class="go">Transcribe</button>
         <button id="stopBtn" class="stop" disabled>Stop</button>
         <button id="uploadBtn">Upload</button>
-        <input id="fileInput" type="file" accept="audio/*,.wav,.mp3,.flac,.m4a,.ogg,.webm,.aac" hidden />
+        <input id="fileInput" type="file" accept=".mp3,.m4a,.aac,.ogg,.webm,audio/mpeg,audio/mp4,audio/aac,audio/ogg,audio/webm" hidden />
         <button id="clearBtn">Clear</button>
         <select id="modelSel" title="Accuracy / model size">
           <option value="Xenova/whisper-tiny">Tiny (fastest, ~75MB)</option>
@@ -267,18 +267,39 @@
       return transcriber;
     }
 
+    function normalizePcm(pcm, targetPeak = 0.97, targetRms = 0.15) {
+      let peak = 0, sumSq = 0;
+      for (let i = 0; i < pcm.length; i++) {
+        const v = Math.abs(pcm[i]);
+        if (v > peak) peak = v;
+        sumSq += pcm[i] * pcm[i];
+      }
+      if (peak === 0) return pcm;
+      const rms = Math.sqrt(sumSq / pcm.length);
+      const peakGain = targetPeak / peak;
+      const rmsGain = rms > 0 ? targetRms / rms : peakGain;
+      const gain = Math.min(peakGain, rmsGain);
+      const out = new Float32Array(pcm.length);
+      for (let i = 0; i < pcm.length; i++) out[i] = Math.max(-1, Math.min(1, pcm[i] * gain));
+      return out;
+    }
+
     async function blobToMono16k(blob) {
       const arr = await blob.arrayBuffer();
       const AC = window.AudioContext || window.webkitAudioContext;
       const ctx = new AC({ sampleRate: 16000 });
       const decoded = await ctx.decodeAudioData(arr);
-      if (decoded.numberOfChannels === 1) return decoded.getChannelData(0);
-      const merged = new Float32Array(decoded.length);
-      for (let ch = 0; ch < decoded.numberOfChannels; ch++) {
-        const data = decoded.getChannelData(ch);
-        for (let i = 0; i < data.length; i++) merged[i] += data[i] / decoded.numberOfChannels;
+      let mono;
+      if (decoded.numberOfChannels === 1) {
+        mono = new Float32Array(decoded.getChannelData(0));
+      } else {
+        mono = new Float32Array(decoded.length);
+        for (let ch = 0; ch < decoded.numberOfChannels; ch++) {
+          const data = decoded.getChannelData(ch);
+          for (let i = 0; i < data.length; i++) mono[i] += data[i] / decoded.numberOfChannels;
+        }
       }
-      return merged;
+      return normalizePcm(mono);
     }
 
     function renderPlaceholder(msg) {
@@ -455,9 +476,16 @@
     mainBtn.addEventListener("click", startRecording);
 
     uploadBtn.addEventListener("click", () => fileInput.click());
+    const ALLOWED_EXT = /\.(mp3|m4a|aac|ogg|webm)$/i;
     fileInput.addEventListener("change", async () => {
       const file = fileInput.files?.[0];
       if (!file) return;
+      if (!ALLOWED_EXT.test(file.name)) {
+        renderPlaceholder("Upload MP3, M4A, AAC, OGG or WEBM. WAV/FLAC conversion coming soon (extra credit).");
+        setStatus("Unsupported format: " + file.name);
+        fileInput.value = "";
+        return;
+      }
       audioBlob = file;
       player.src = URL.createObjectURL(file);
       renderPlaceholder("Preparing " + file.name + "...");
