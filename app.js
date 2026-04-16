@@ -451,11 +451,12 @@ function unlockButtons() {
 
 /* ============ TRANSCRIBE ============ */
 function estimateSeconds(audioSeconds, modelId) {
-  // Rough multipliers on modern desktop CPU
-  const m = modelId.includes("tiny") ? 0.1
-    : modelId.includes("base") ? 0.18
-    : modelId.includes("small") ? 0.4
-    : 0.9; // medium
+  // Realistic multipliers for WASM Whisper in-browser on mid-range desktop.
+  // Multiplier = processing / audio duration (lower = faster than realtime).
+  const m = modelId.includes("tiny") ? 0.25
+    : modelId.includes("base") ? 0.5
+    : modelId.includes("small") ? 1.2
+    : 2.5; // medium
   return audioSeconds * m;
 }
 
@@ -586,15 +587,15 @@ clearBtn.addEventListener("click", () => {
 /* ============ ESTIMATES ============ */
 function updateEstimateLabel() {
   const m = modelSel.value;
-  const label = m.includes("tiny") ? "Tiny · ~0.1x realtime"
-    : m.includes("base") ? "Base · ~0.2x realtime"
-    : m.includes("small") ? "Small · ~0.4x realtime"
-    : "Medium · ~0.9x realtime";
+  const label = m.includes("tiny") ? "Tiny · fastest, lowest accuracy"
+    : m.includes("base") ? "Base · fast"
+    : m.includes("small") ? "Small · balanced"
+    : "Medium · most accurate, slowest";
   estModel.textContent = label;
-  estText.textContent = m.includes("tiny") ? "≈30s for 5-min audio"
-    : m.includes("base") ? "≈1 min for 5-min audio"
-    : m.includes("small") ? "≈2 min for 5-min audio"
-    : "≈4-5 min for 5-min audio";
+  estText.textContent = m.includes("tiny") ? "≈1 min for 5-min audio"
+    : m.includes("base") ? "≈2-3 min for 5-min audio"
+    : m.includes("small") ? "≈5-6 min for 5-min audio"
+    : "≈12-15 min for 5-min audio";
 }
 modelSel.addEventListener("change", updateEstimateLabel);
 updateEstimateLabel();
