@@ -20,8 +20,8 @@
 
   --glass-bg: rgba(255, 255, 255, 0.22);
   --glass-bg-strong: rgba(255, 255, 255, 0.55);
-  --glass-border: rgba(255, 255, 255, 0.6);
-  --glass-border-hover: rgba(255, 255, 255, 0.9);
+  --glass-border: rgba(255, 255, 255, 0.35);
+  --glass-border-hover: rgba(255, 255, 255, 0.55);
   --glass-inner-top: rgba(255, 255, 255, 1);
   --glass-inner-bottom: rgba(15, 23, 42, 0.08);
   --glass-gloss: rgba(255, 255, 255, 0.55);
@@ -192,10 +192,10 @@ body::after {
   border-radius: inherit;
   padding: 1px;
   background: linear-gradient(180deg,
-    rgba(255, 255, 255, 0.9) 0%,
-    rgba(255, 255, 255, 0.4) 25%,
+    rgba(255, 255, 255, 0.45) 0%,
+    rgba(255, 255, 255, 0.18) 25%,
     rgba(255, 255, 255, 0) 55%,
-    rgba(255, 255, 255, 0.08) 100%);
+    rgba(255, 255, 255, 0.04) 100%);
   -webkit-mask:
     linear-gradient(black, black) content-box,
     linear-gradient(black, black);
