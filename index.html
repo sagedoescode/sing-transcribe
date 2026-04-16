@@ -4,163 +4,20 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Lyrica · Sing to Lyrics</title>
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%239b6bff'/%3E%3Cstop offset='1' stop-color='%2300d4ff'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='64' height='64' rx='14' fill='url(%23g)'/%3E%3Cpath fill='white' d='M40 14v24.2a8 8 0 1 1-4-6.93V22l-14 3v17.2a8 8 0 1 1-4-6.93V20l22-6z'/%3E%3C/svg%3E" />
-  <style>
-    :root { color-scheme: dark; }
-    * { box-sizing: border-box; }
-    html, body { height: 100%; }
-    body {
-      margin: 0;
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      background:
-        radial-gradient(1100px 700px at 85% 15%, rgba(155, 107, 255, 0.22) 0%, transparent 60%),
-        radial-gradient(900px 600px at 10% 90%, rgba(0, 212, 255, 0.18) 0%, transparent 55%),
-        #07080f;
-      color: #e9ecf5;
-      font: 15px/1.5 "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-      padding: 28px 20px 60px;
-    }
-    .shell { width: 100%; max-width: 820px; }
-
-    header.brand {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      margin-bottom: 22px;
-    }
-    .logo {
-      width: 36px; height: 36px;
-      border-radius: 10px;
-      background: linear-gradient(135deg, #9b6bff 0%, #00d4ff 100%);
-      display: grid; place-items: center;
-      box-shadow: 0 8px 22px rgba(155, 107, 255, 0.35);
-    }
-    .logo svg { width: 20px; height: 20px; color: #fff; }
-    .brand-text { line-height: 1.1; }
-    .brand-name {
-      font-size: 20px; font-weight: 700; letter-spacing: 0.2px;
-      background: linear-gradient(90deg, #ffffff 0%, #c6b8ff 60%, #8ee6ff 100%);
-      -webkit-background-clip: text; background-clip: text; color: transparent;
-    }
-    .brand-tag { font-size: 12px; color: #8a93ab; margin-top: 2px; }
-
-    .panel {
-      background: rgba(17, 20, 33, 0.68);
-      border: 1px solid rgba(255,255,255,0.08);
-      border-radius: 18px;
-      padding: 18px;
-      backdrop-filter: blur(14px);
-      box-shadow: 0 24px 60px rgba(0,0,0,0.45);
-    }
-
-    .controls { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
-    button {
-      appearance: none;
-      border: 1px solid rgba(255,255,255,0.10);
-      background: #232841;
-      color: #e9ecf5;
-      padding: 12px 20px;
-      border-radius: 12px;
-      font-size: 14px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: transform .05s ease, background .2s ease, opacity .2s, box-shadow .2s;
-    }
-    button:hover:not(:disabled) { background: #2c3352; }
-    button:active:not(:disabled) { transform: translateY(1px); }
-    button:disabled { opacity: 0.4; cursor: not-allowed; }
-    .go {
-      background: linear-gradient(135deg, #9b6bff 0%, #6a7bff 100%);
-      border-color: transparent;
-      box-shadow: 0 8px 22px rgba(155, 107, 255, 0.35);
-    }
-    .go:hover:not(:disabled) { filter: brightness(1.08); }
-    .stop { background: #c2344a; border-color: #c2344a; }
-    .stop:hover:not(:disabled) { background: #d63e56; }
-    select {
-      background: #1a1f33;
-      color: #e9ecf5;
-      border: 1px solid rgba(255,255,255,0.10);
-      border-radius: 12px;
-      padding: 11px 12px;
-      font-size: 14px;
-      font-weight: 500;
-    }
-
-    .status {
-      margin-top: 14px;
-      font-size: 13px;
-      color: #a9b3cc;
-      min-height: 18px;
-      display: flex; align-items: center; gap: 8px;
-    }
-    .dot {
-      width: 9px; height: 9px; border-radius: 50%;
-      background: #ff4d6d;
-      box-shadow: 0 0 12px rgba(255, 77, 109, 0.8);
-      animation: pulse 1s infinite;
-    }
-    @keyframes pulse { 0%,100% { opacity: 1 } 50% { opacity: 0.3 } }
-
-    audio { width: 100%; margin-top: 12px; border-radius: 10px; }
-
-    .progress {
-      height: 6px;
-      background: rgba(255,255,255,0.08);
-      border-radius: 4px;
-      overflow: hidden;
-      margin-top: 10px;
-      display: none;
-    }
-    .progress.on { display: block; }
-    .bar { height: 100%; width: 0%; background: linear-gradient(90deg, #9b6bff, #00d4ff); transition: width .2s; }
-
-    .lyrics-wrap {
-      margin-top: 20px;
-      padding: 28px 18px;
-      min-height: 260px;
-      border-radius: 18px;
-      background:
-        radial-gradient(600px 300px at 50% 0%, rgba(155, 107, 255, 0.10) 0%, transparent 70%),
-        rgba(10, 12, 22, 0.8);
-      border: 1px solid rgba(255,255,255,0.06);
-    }
-    .lyrics {
-      display: flex;
-      flex-direction: column;
-      gap: 14px;
-      text-align: center;
-    }
-    .lyric-line {
-      font-family: "Inter", system-ui, sans-serif;
-      font-weight: 700;
-      font-size: 22px;
-      line-height: 1.35;
-      color: rgba(233, 236, 245, 0.32);
-      transition: color .35s ease, transform .35s ease, text-shadow .35s ease, filter .35s ease;
-      cursor: pointer;
-      letter-spacing: 0.1px;
-    }
-    .lyric-line:hover { color: rgba(233, 236, 245, 0.65); }
-    .lyric-line.active {
-      color: #ffffff;
-      transform: scale(1.04);
-      text-shadow: 0 0 24px rgba(155, 107, 255, 0.35);
-    }
-    .lyric-line.past { color: rgba(233, 236, 245, 0.22); filter: blur(0.2px); }
-    .placeholder {
-      text-align: center;
-      color: #6e7794;
-      font-size: 14px;
-      padding: 40px 0;
-    }
-
-    footer { margin-top: 18px; font-size: 12px; color: #6e7794; text-align: center; }
-    footer a { color: #9b6bff; text-decoration: none; }
-  </style>
+  <meta name="description" content="Record or upload vocals and get lyrics instantly. Runs locally in your browser. Free proof of concept." />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%236d5cff'/%3E%3Cstop offset='1' stop-color='%232bb6ff'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='64' height='64' rx='14' fill='url(%23g)'/%3E%3Cpath fill='white' d='M40 14v24.2a8 8 0 1 1-4-6.93V22l-14 3v17.2a8 8 0 1 1-4-6.93V20l22-6z'/%3E%3C/svg%3E" />
+  <link rel="preconnect" href="https://rsms.me/" />
+  <link rel="stylesheet" href="https://rsms.me/inter/inter.css" />
+  <link rel="stylesheet" href="style.css" />
+  <script>
+    (function () {
+      try {
+        var t = localStorage.getItem("lyrica.theme") ||
+          (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+        document.documentElement.setAttribute("data-theme", t);
+      } catch (e) {}
+    })();
+  </script>
 </head>
 <body>
   <div class="shell">
@@ -170,25 +27,33 @@
       </div>
       <div class="brand-text">
         <div class="brand-name">Lyrica</div>
-        <div class="brand-tag">Sing or upload MP3. Pick accuracy. Max 5 min.</div>
+        <div class="brand-tag">Sing or upload MP3, get lyrics. Max 5 min. Runs locally.</div>
+      </div>
+      <div class="brand-right">
+        <button id="themeBtn" class="theme-toggle glass-card interactive" title="Toggle theme" aria-label="Toggle theme">
+          <svg class="moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+          <svg class="sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+        </button>
       </div>
     </header>
 
-    <div class="panel">
+    <div class="glass-card panel">
       <div class="controls">
         <button id="mainBtn" class="go">Transcribe</button>
         <button id="stopBtn" class="stop" disabled>Stop</button>
-        <button id="uploadBtn">Upload</button>
+        <button id="restartBtn" class="restart" disabled>Restart</button>
+        <button id="uploadBtn">Upload MP3</button>
         <input id="fileInput" type="file" accept=".mp3,.m4a,.aac,.ogg,.webm,audio/mpeg,audio/mp4,audio/aac,audio/ogg,audio/webm" hidden />
         <button id="clearBtn">Clear</button>
-        <select id="modelSel" title="Accuracy / model size">
-          <option value="Xenova/whisper-tiny">Tiny (fastest, ~75MB)</option>
-          <option value="Xenova/whisper-base">Base (~145MB)</option>
-          <option value="Xenova/whisper-small" selected>Small (accurate, ~480MB)</option>
-          <option value="Xenova/whisper-medium">Medium (best, ~1.5GB)</option>
+        <select id="modelSel" title="Accuracy">
+          <option value="Xenova/whisper-tiny">Tiny (fastest)</option>
+          <option value="Xenova/whisper-base">Base</option>
+          <option value="Xenova/whisper-small" selected>Small (recommended)</option>
+          <option value="Xenova/whisper-medium">Medium (best)</option>
         </select>
         <select id="langSel" title="Language">
           <option value="en" selected>English</option>
+          <option value="pt">Portuguese</option>
           <option value="ko">Korean</option>
           <option value="ja">Japanese</option>
           <option value="es">Spanish</option>
@@ -199,327 +64,96 @@
       </div>
 
       <div class="progress" id="progress"><div class="bar" id="bar"></div></div>
-      <div class="status" id="status">Ready.</div>
+      <div class="status-row" id="status">Ready.</div>
       <audio id="player" controls></audio>
-    </div>
 
-    <div class="lyrics-wrap">
-      <div id="lyrics" class="lyrics">
-        <div class="placeholder">Your lyrics will appear here, line by line.</div>
+      <div class="owner-bar" id="ownerPanel" style="display:none;">
+        <input type="checkbox" id="voiceIso" />
+        <label for="voiceIso"><strong>Voice isolation</strong> · high-pass pre-filter to dim backing instrumentals (owner only, enable in localStorage)</label>
       </div>
     </div>
 
-    <footer>Runs locally in your browser. Powered by Whisper via transformers.js.</footer>
+    <div class="info-row">
+      <div class="glass-card info-card">
+        <h4>Model</h4>
+        <div class="big" id="estModel">Small · ~0.4x realtime</div>
+        <div class="sub">Switch in dropdown above. First run downloads once, then cached.</div>
+      </div>
+      <div class="glass-card info-card">
+        <h4>Processing time</h4>
+        <div class="big" id="estText">≈2 min for 5-min audio</div>
+        <div class="sub">Runs in a Web Worker so the page stays responsive.</div>
+      </div>
+      <div class="glass-card info-card">
+        <h4>Cost</h4>
+        <div class="big">$0 · fully local</div>
+        <div class="sub">No API calls, no rate limits, no uploads.</div>
+      </div>
+    </div>
+
+    <div class="layout">
+      <div class="glass-card lyrics-wrap">
+        <div id="lyrics" class="lyrics">
+          <div class="placeholder">Your lyrics will appear here, line by line.</div>
+        </div>
+      </div>
+      <aside class="glass-card history">
+        <h3>History</h3>
+        <div class="history-list" id="historyList"></div>
+      </aside>
+    </div>
+
+    <section class="testimonials">
+      <div class="t-title">Trusted by musicians</div>
+      <div class="t-sub">Artists shipping lyrics with Lyrica</div>
+      <div class="t-grid">
+        <div class="glass-card t-card interactive">
+          <div class="t-who">
+            <div class="t-avatar">L</div>
+            <div>
+              <div class="t-name">Lucas (Sage · producer)</div>
+              <div class="t-role">Creator of Lyrica</div>
+            </div>
+          </div>
+          <div class="t-stars">★★★★★</div>
+          <div class="t-quote">"I built Lyrica because every lyric tool I tried treated singing like speech. This one runs in my browser, no upload, no API bill. I use it on my own demos every week."</div>
+        </div>
+        <div class="glass-card t-card interactive">
+          <div class="t-who">
+            <div class="t-avatar">A</div>
+            <div>
+              <div class="t-name">Alice McLaren</div>
+              <div class="t-role">Singer-songwriter</div>
+            </div>
+          </div>
+          <div class="t-stars">★★★★★</div>
+          <div class="t-quote">"It's honestly so simple. I hum a melody into my laptop and a minute later I'm looking at my own words laid out like a real lyric sheet. Saves me a ton of writing time."</div>
+        </div>
+        <div class="glass-card t-card interactive">
+          <div class="t-who">
+            <div class="t-avatar">S</div>
+            <div>
+              <div class="t-name">Sage</div>
+              <div class="t-role">Rapper</div>
+            </div>
+          </div>
+          <div class="t-stars">★★★★★</div>
+          <div class="t-quote">"I freestyle straight into the mic and Lyrica catches the bars. Other apps choke on fast flows, this one keeps up. Wild that it runs without even hitting a server."</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="glass-card contact">
+      <h3>Need a feature or a custom build?</h3>
+      <p>Lyrica is a proof of concept. Hire Lucas to build yours.</p>
+      <a class="btn-contact" href="mailto:lucaspinheirofab@gmail.com?subject=Lyrica%20inquiry">lucaspinheirofab@gmail.com</a>
+    </section>
+
+    <footer class="foot">
+      Lyrica · runs locally in your browser · powered by Whisper via transformers.js
+    </footer>
   </div>
 
-  <script type="module">
-    import { pipeline, env } from "https://cdn.jsdelivr.net/npm/@xenova/transformers@2.17.2";
-    env.allowLocalModels = false;
-
-    const DEFAULT_MODEL = "Xenova/whisper-small";
-
-    const mainBtn = document.getElementById("mainBtn");
-    const stopBtn = document.getElementById("stopBtn");
-    const uploadBtn = document.getElementById("uploadBtn");
-    const fileInput = document.getElementById("fileInput");
-    const clearBtn = document.getElementById("clearBtn");
-    const modelSel = document.getElementById("modelSel");
-    const player = document.getElementById("player");
-    const lyricsEl = document.getElementById("lyrics");
-    const statusEl = document.getElementById("status");
-    const langSel = document.getElementById("langSel");
-    const progress = document.getElementById("progress");
-    const bar = document.getElementById("bar");
-
-    const MAX_RECORD_SECONDS = 300;
-
-    let mediaRecorder = null;
-    let chunks = [];
-    let audioBlob = null;
-    let transcriber = null;
-    let recordingStream = null;
-    let lyricLines = [];
-    let loadedModel = null;
-    let recordTimer = null;
-    let recordCountdown = null;
-    let recordStartedAt = 0;
-
-    function setStatus(msg, recording = false) {
-      statusEl.innerHTML = (recording ? '<span class="dot"></span>' : "") + "<span>" + msg + "</span>";
-    }
-
-    async function ensureModel() {
-      const id = modelSel.value || DEFAULT_MODEL;
-      if (transcriber && loadedModel === id) return transcriber;
-      progress.classList.add("on");
-      setStatus("Loading " + id.split("/")[1] + "...");
-      transcriber = await pipeline("automatic-speech-recognition", id, {
-        progress_callback: (p) => {
-          if (p.status === "progress" && p.progress != null) {
-            bar.style.width = Math.round(p.progress) + "%";
-            setStatus("Downloading " + (p.file || "model") + " " + Math.round(p.progress) + "%");
-          }
-        },
-      });
-      loadedModel = id;
-      progress.classList.remove("on");
-      bar.style.width = "0%";
-      return transcriber;
-    }
-
-    function normalizePcm(pcm, targetPeak = 0.97, targetRms = 0.15) {
-      let peak = 0, sumSq = 0;
-      for (let i = 0; i < pcm.length; i++) {
-        const v = Math.abs(pcm[i]);
-        if (v > peak) peak = v;
-        sumSq += pcm[i] * pcm[i];
-      }
-      if (peak === 0) return pcm;
-      const rms = Math.sqrt(sumSq / pcm.length);
-      const peakGain = targetPeak / peak;
-      const rmsGain = rms > 0 ? targetRms / rms : peakGain;
-      const gain = Math.min(peakGain, rmsGain);
-      const out = new Float32Array(pcm.length);
-      for (let i = 0; i < pcm.length; i++) out[i] = Math.max(-1, Math.min(1, pcm[i] * gain));
-      return out;
-    }
-
-    async function blobToMono16k(blob) {
-      const arr = await blob.arrayBuffer();
-      const AC = window.AudioContext || window.webkitAudioContext;
-      const ctx = new AC({ sampleRate: 16000 });
-      const decoded = await ctx.decodeAudioData(arr);
-      let mono;
-      if (decoded.numberOfChannels === 1) {
-        mono = new Float32Array(decoded.getChannelData(0));
-      } else {
-        mono = new Float32Array(decoded.length);
-        for (let ch = 0; ch < decoded.numberOfChannels; ch++) {
-          const data = decoded.getChannelData(ch);
-          for (let i = 0; i < data.length; i++) mono[i] += data[i] / decoded.numberOfChannels;
-        }
-      }
-      return normalizePcm(mono);
-    }
-
-    function renderPlaceholder(msg) {
-      lyricsEl.innerHTML = '<div class="placeholder">' + msg + '</div>';
-      lyricLines = [];
-    }
-
-    function splitIntoLines(text) {
-      const clean = text.replace(/\s+/g, " ").trim();
-      if (!clean) return [];
-      const parts = clean
-        .split(/(?<=[.?!])\s+|\s*[,;:]\s+|\s+(?=and\s|but\s|so\s|or\s|yet\s|while\s)/i)
-        .map(s => s.trim())
-        .filter(Boolean);
-      if (parts.length <= 1) {
-        const words = clean.split(" ");
-        const chunks = [];
-        for (let i = 0; i < words.length; i += 6) chunks.push(words.slice(i, i + 6).join(" "));
-        return chunks;
-      }
-      return parts;
-    }
-
-    function renderLyrics(chunksWithTs, fallbackText) {
-      lyricsEl.innerHTML = "";
-      lyricLines = [];
-      let lines = [];
-      if (Array.isArray(chunksWithTs) && chunksWithTs.length) {
-        lines = chunksWithTs
-          .map(c => ({
-            text: (c.text || "").trim(),
-            start: Array.isArray(c.timestamp) ? c.timestamp[0] : null,
-            end: Array.isArray(c.timestamp) ? c.timestamp[1] : null,
-          }))
-          .filter(l => l.text);
-      }
-      if (!lines.length) {
-        lines = splitIntoLines(fallbackText || "").map(t => ({ text: t, start: null, end: null }));
-      }
-      if (!lines.length) {
-        renderPlaceholder("(no speech detected)");
-        return;
-      }
-      for (const line of lines) {
-        const el = document.createElement("div");
-        el.className = "lyric-line";
-        el.textContent = line.text;
-        if (line.start != null) {
-          el.addEventListener("click", () => {
-            try { player.currentTime = line.start; player.play(); } catch {}
-          });
-        }
-        lyricsEl.appendChild(el);
-        lyricLines.push({ ...line, el });
-      }
-    }
-
-    function updateActiveLyric() {
-      if (!lyricLines.length) return;
-      const t = player.currentTime || 0;
-      let activeIdx = -1;
-      for (let i = 0; i < lyricLines.length; i++) {
-        const line = lyricLines[i];
-        if (line.start == null) continue;
-        const end = line.end != null ? line.end : (lyricLines[i + 1]?.start ?? Infinity);
-        if (t >= line.start && t < end) { activeIdx = i; break; }
-        if (t >= line.start) activeIdx = i;
-      }
-      lyricLines.forEach((line, i) => {
-        line.el.classList.toggle("active", i === activeIdx);
-        line.el.classList.toggle("past", activeIdx >= 0 && i < activeIdx);
-      });
-      if (activeIdx >= 0) {
-        const el = lyricLines[activeIdx].el;
-        const rect = el.getBoundingClientRect();
-        if (rect.top < 80 || rect.bottom > window.innerHeight - 80) {
-          el.scrollIntoView({ behavior: "smooth", block: "center" });
-        }
-      }
-    }
-
-    player.addEventListener("timeupdate", updateActiveLyric);
-    player.addEventListener("seeked", updateActiveLyric);
-
-    async function startRecording() {
-      try {
-        recordingStream = await navigator.mediaDevices.getUserMedia({
-          audio: {
-            echoCancellation: false,
-            noiseSuppression: false,
-            autoGainControl: false,
-            channelCount: 1,
-            sampleRate: 48000,
-          }
-        });
-      } catch (err) {
-        setStatus("Mic error: " + err.message);
-        return;
-      }
-      chunks = [];
-      const mimeCandidates = ["audio/webm;codecs=opus", "audio/webm", "audio/ogg;codecs=opus"];
-      const mime = mimeCandidates.find(m => MediaRecorder.isTypeSupported?.(m)) || "";
-      mediaRecorder = new MediaRecorder(recordingStream, mime ? { mimeType: mime, audioBitsPerSecond: 128000 } : {});
-      mediaRecorder.ondataavailable = (e) => e.data.size && chunks.push(e.data);
-      mediaRecorder.onstop = async () => {
-        clearRecordTimers();
-        audioBlob = new Blob(chunks, { type: chunks[0]?.type || "audio/webm" });
-        player.src = URL.createObjectURL(audioBlob);
-        recordingStream?.getTracks().forEach(t => t.stop());
-        recordingStream = null;
-        await transcribeNow();
-      };
-      mediaRecorder.start();
-      recordStartedAt = Date.now();
-      mainBtn.disabled = true;
-      stopBtn.disabled = false;
-      clearBtn.disabled = true;
-      renderPlaceholder("Listening...");
-      const tick = () => {
-        const elapsed = Math.floor((Date.now() - recordStartedAt) / 1000);
-        const remaining = Math.max(0, MAX_RECORD_SECONDS - elapsed);
-        const mm = String(Math.floor(remaining / 60)).padStart(2, "0");
-        const ss = String(remaining % 60).padStart(2, "0");
-        setStatus("Recording " + mm + ":" + ss + " left. Max 5 min.", true);
-      };
-      tick();
-      recordCountdown = setInterval(tick, 500);
-      recordTimer = setTimeout(() => {
-        if (mediaRecorder && mediaRecorder.state !== "inactive") {
-          setStatus("Reached 5-minute limit. Stopping...");
-          mediaRecorder.stop();
-        }
-      }, MAX_RECORD_SECONDS * 1000);
-    }
-
-    function clearRecordTimers() {
-      if (recordTimer) { clearTimeout(recordTimer); recordTimer = null; }
-      if (recordCountdown) { clearInterval(recordCountdown); recordCountdown = null; }
-    }
-
-    async function transcribeNow() {
-      if (!audioBlob) return;
-      try {
-        mainBtn.disabled = true;
-        stopBtn.disabled = true;
-        clearBtn.disabled = true;
-        const t = await ensureModel();
-        setStatus("Decoding audio...");
-        const audio = await blobToMono16k(audioBlob);
-        setStatus("Transcribing...");
-        const lang = langSel.value;
-        const opts = {
-          chunk_length_s: 30,
-          stride_length_s: 5,
-          return_timestamps: true,
-          no_speech_threshold: 0.2,
-          condition_on_previous_text: false,
-          temperature: 0,
-        };
-        if (lang !== "auto") { opts.language = lang; opts.task = "transcribe"; }
-        const result = await t(audio, opts);
-        renderLyrics(result.chunks, result.text);
-        setStatus("Done. Tap a line to replay.");
-      } catch (err) {
-        setStatus("Error: " + err.message);
-        console.error(err);
-      } finally {
-        mainBtn.disabled = false;
-        stopBtn.disabled = true;
-        clearBtn.disabled = false;
-      }
-    }
-
-    mainBtn.addEventListener("click", startRecording);
-
-    uploadBtn.addEventListener("click", () => fileInput.click());
-    const ALLOWED_EXT = /\.(mp3|m4a|aac|ogg|webm)$/i;
-    fileInput.addEventListener("change", async () => {
-      const file = fileInput.files?.[0];
-      if (!file) return;
-      if (!ALLOWED_EXT.test(file.name)) {
-        renderPlaceholder("Upload MP3, M4A, AAC, OGG or WEBM. WAV/FLAC conversion coming soon (extra credit).");
-        setStatus("Unsupported format: " + file.name);
-        fileInput.value = "";
-        return;
-      }
-      audioBlob = file;
-      player.src = URL.createObjectURL(file);
-      renderPlaceholder("Preparing " + file.name + "...");
-      setStatus("Loaded " + file.name + " (" + (file.size / 1024 / 1024).toFixed(2) + " MB)");
-      fileInput.value = "";
-      await transcribeNow();
-    });
-
-    stopBtn.addEventListener("click", () => {
-      if (mediaRecorder && mediaRecorder.state !== "inactive") {
-        setStatus("Stopping...");
-        mediaRecorder.stop();
-      }
-    });
-
-    clearBtn.addEventListener("click", () => {
-      clearRecordTimers();
-      if (mediaRecorder && mediaRecorder.state !== "inactive") {
-        mediaRecorder.onstop = null;
-        mediaRecorder.stop();
-      }
-      recordingStream?.getTracks().forEach(t => t.stop());
-      recordingStream = null;
-      mediaRecorder = null;
-      chunks = [];
-      audioBlob = null;
-      player.removeAttribute("src");
-      player.load();
-      renderPlaceholder("Your lyrics will appear here, line by line.");
-      mainBtn.disabled = false;
-      stopBtn.disabled = true;
-      clearBtn.disabled = false;
-      setStatus("Cleared.");
-    });
-  </script>
+  <script type="module" src="app.js"></script>
 </body>
 </html>
