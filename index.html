@@ -63,8 +63,7 @@
         </select>
       </div>
 
-      <div class="progress" id="progress"><div class="bar" id="bar"></div></div>
-      <div class="status-row" id="status">Ready.</div>
+      <div class="status-row" id="status">Ready when you are.</div>
       <audio id="player" controls></audio>
 
       <div class="owner-bar" id="ownerPanel" style="display:none;">
@@ -93,6 +92,12 @@
 
     <div class="layout">
       <div class="glass-card lyrics-wrap">
+        <div id="workingArea" class="working" style="display:none;">
+          <div class="working-title" id="workingTitle">Getting your lyrics ready</div>
+          <div class="working-sub" id="workingSub">This can take a minute. You can leave the tab open, it runs in the background.</div>
+          <div class="working-bar"><div class="working-fill" id="workingFill"></div></div>
+          <div class="working-hint" id="workingHint"></div>
+        </div>
         <div id="lyrics" class="lyrics">
           <div class="placeholder">Your lyrics will appear here, line by line.</div>
         </div>

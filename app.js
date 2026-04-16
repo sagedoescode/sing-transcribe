@@ -18,8 +18,11 @@ const langSel = $("langSel");
 const player = $("player");
 const lyricsEl = $("lyrics");
 const statusEl = $("status");
-const progress = $("progress");
-const bar = $("bar");
+const workingArea = $("workingArea");
+const workingTitle = $("workingTitle");
+const workingSub = $("workingSub");
+const workingHint = $("workingHint");
+const workingFill = $("workingFill");
 const historyList = $("historyList");
 const themeBtn = $("themeBtn");
 const estText = $("estText");
@@ -72,32 +75,58 @@ window.lyrica = {
 };
 
 /* ============ WORKER ============ */
+function showWorking(title, sub) {
+  lyricsEl.style.display = "none";
+  workingArea.style.display = "flex";
+  workingTitle.textContent = title;
+  workingSub.textContent = sub || "";
+  workingHint.textContent = "";
+  workingFill.style.width = "0%";
+}
+function updateWorking(opts) {
+  if (opts.title) workingTitle.textContent = opts.title;
+  if (opts.sub) workingSub.textContent = opts.sub;
+  if (opts.hint != null) workingHint.textContent = opts.hint;
+  if (opts.fill != null) workingFill.style.width = Math.max(0, Math.min(100, opts.fill)) + "%";
+}
+function hideWorking() {
+  workingArea.style.display = "none";
+  lyricsEl.style.display = "flex";
+}
+
+function prettyModelName(id) {
+  if (id?.includes("tiny")) return "Tiny";
+  if (id?.includes("base")) return "Base";
+  if (id?.includes("small")) return "Small";
+  if (id?.includes("medium")) return "Medium";
+  return "voice model";
+}
+
 function startWorker() {
   if (worker) return worker;
   worker = new Worker("worker.js", { type: "module" });
   worker.onmessage = (e) => {
     const m = e.data;
     if (m.type === "download") {
-      progress.classList.add("on");
-      bar.style.width = Math.round(m.progress) + "%";
-      setStatus("Downloading " + (m.file || "model") + " " + Math.round(m.progress) + "%");
+      updateWorking({
+        title: "Warming up for the first time",
+        sub: "Downloading the " + prettyModelName(modelSel.value) + " voice model. This happens once, then it's instant.",
+        fill: Math.round(m.progress),
+        hint: Math.round(m.progress) + "% downloaded",
+      });
     } else if (m.type === "download-done") {
       /* continue */
     } else if (m.type === "started") {
-      progress.classList.add("on");
-      bar.style.width = "5%";
-      const est = m.estimatedSeconds ? " (est ~" + Math.round(m.estimatedSeconds) + "s)" : "";
-      setStatus("Transcribing..." + est);
       startJobTicker(m.estimatedSeconds);
     } else if (m.type === "result") {
       stopJobTicker();
-      bar.style.width = "100%";
-      setTimeout(() => { progress.classList.remove("on"); bar.style.width = "0%"; }, 400);
+      updateWorking({ fill: 100 });
+      setTimeout(() => { hideWorking(); }, 250);
       finalizeResult(m.id, m.text, m.chunks, m.elapsed);
     } else if (m.type === "error") {
       stopJobTicker();
-      progress.classList.remove("on");
-      setStatus("Error: " + m.message);
+      hideWorking();
+      setStatus("Something went wrong: " + m.message);
       unlockButtons();
     }
   };
@@ -107,15 +136,42 @@ function startWorker() {
 function startJobTicker(estimated) {
   stopJobTicker();
   const start = performance.now();
+  const phases = [
+    { t: 0,    title: "Listening to your vocals", sub: "Picking up the melody and words." },
+    { t: 0.35, title: "Catching the words",       sub: "Lining up phrases the way you sang them." },
+    { t: 0.75, title: "Almost there",             sub: "Cleaning up the last bits." },
+  ];
+  let phaseIdx = 0;
+  updateWorking({ title: phases[0].title, sub: phases[0].sub });
   activeJobTicker = setInterval(() => {
     const elapsed = (performance.now() - start) / 1000;
-    if (estimated > 0) {
-      const pct = Math.min(92, 5 + (elapsed / estimated) * 88);
-      bar.style.width = pct.toFixed(1) + "%";
-    } else {
-      bar.style.width = (5 + ((elapsed * 4) % 88)).toFixed(1) + "%";
+    const rel = estimated > 0 ? elapsed / estimated : 0;
+    const pct = estimated > 0
+      ? Math.min(94, 3 + rel * 91)
+      : 3 + ((elapsed * 4) % 91);
+    updateWorking({ fill: pct });
+
+    // Phase copy
+    const next = phases.findIndex((p) => rel < p.t);
+    const idx = (next === -1 ? phases.length : next) - 1;
+    if (idx !== phaseIdx && phases[idx]) {
+      phaseIdx = idx;
+      updateWorking({ title: phases[idx].title, sub: phases[idx].sub });
     }
+
+    // Hint line: elapsed or "taking longer than expected"
+    const over = estimated > 0 && elapsed > estimated * 1.2;
+    const hint = over
+      ? "Taking a little longer on this one. Hang tight."
+      : "Elapsed " + formatSec(elapsed) + (estimated ? " of about " + formatSec(estimated) : "");
+    updateWorking({ hint });
   }, 300);
+}
+function formatSec(s) {
+  s = Math.max(0, Math.round(s));
+  const mm = Math.floor(s / 60);
+  const ss = s % 60;
+  return mm > 0 ? mm + "m " + ss + "s" : ss + "s";
 }
 function stopJobTicker() {
   if (activeJobTicker) { clearInterval(activeJobTicker); activeJobTicker = null; }
@@ -425,13 +481,13 @@ async function startRecording() {
     const remaining = Math.max(0, MAX_RECORD_SECONDS - elapsed);
     const mm = String(Math.floor(remaining / 60)).padStart(2, "0");
     const ss = String(remaining % 60).padStart(2, "0");
-    setStatus("Recording " + mm + ":" + ss + " left. Max 5 min.", true);
+    setStatus("Recording, " + mm + ":" + ss + " left (5 min max).", true);
   };
   tick();
   recordCountdown = setInterval(tick, 500);
   recordTimer = setTimeout(() => {
     if (mediaRecorder && mediaRecorder.state !== "inactive") {
-      setStatus("Reached 5-minute limit. Stopping...");
+      setStatus("Hit the 5-minute limit. Wrapping up.");
       mediaRecorder.stop();
     }
   }, MAX_RECORD_SECONDS * 1000);
@@ -464,14 +520,20 @@ async function transcribeNow() {
   if (!audioBlob) return;
   try {
     mainBtn.disabled = true; stopBtn.disabled = true; restartBtn.disabled = true; clearBtn.disabled = true;
-    setStatus("Decoding audio...");
-    progress.classList.add("on"); bar.style.width = "5%";
+    showWorking("Getting your audio ready", "One moment.");
+    setStatus("Working on it...");
 
     const audio = await blobToMono16k(audioBlob);
     const durationSec = audio.length / 16000;
     const modelId = modelSel.value || DEFAULT_MODEL;
     const lang = langSel.value;
     const estimated = estimateSeconds(durationSec, modelId);
+
+    updateWorking({
+      title: "Listening to your vocals",
+      sub: "Should take about " + formatSec(estimated) + ". The page stays responsive, you can keep it open.",
+      fill: 3,
+    });
 
     startWorker();
     const id = ++jobId;
@@ -487,9 +549,9 @@ async function transcribeNow() {
       durationSec,
     }, [audio.buffer]);
   } catch (err) {
-    setStatus("Error: " + err.message);
     console.error(err);
-    progress.classList.remove("on");
+    hideWorking();
+    setStatus("Something went wrong: " + err.message);
     unlockButtons();
   }
 }
@@ -510,7 +572,7 @@ function finalizeResult(id, text, rawChunks, elapsed) {
   };
   currentEntryId = entry.id;
   addHistoryEntry(entry);
-  setStatus("Done in " + (elapsed ? elapsed.toFixed(1) : "?") + "s. Tap a line to replay.");
+  setStatus("Here are your lyrics. Tap a line to replay that moment.");
   unlockButtons();
 }
 
@@ -558,8 +620,7 @@ fileInput.addEventListener("change", async () => {
   }
   audioBlob = file;
   player.src = URL.createObjectURL(file);
-  renderPlaceholder("Preparing " + file.name + "...");
-  setStatus("Loaded " + file.name + " (" + (file.size / 1024 / 1024).toFixed(2) + " MB)");
+  setStatus("Loaded " + file.name + ". Starting now.");
   fileInput.value = "";
   await transcribeNow();
 });
